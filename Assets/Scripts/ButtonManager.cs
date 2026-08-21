@@ -13,6 +13,9 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private GameObject levelPanel;
     [SerializeField] private GameObject optionPanel;
 
+    [Header("Level Navigation")]
+    [SerializeField] private string nextLevelScene = "Level_3";
+
 
     // ==================================================
     // VOLUME UI
@@ -47,8 +50,11 @@ public class ButtonManager : MonoBehaviour
         musicMuted = PlayerPrefs.GetInt("MusicMuted", 0) == 1;
         sfxMuted = PlayerPrefs.GetInt("SFXMuted", 0) == 1;
 
-        // Hiển thị Main Panel
-        ShowMainPanel();
+        // Main-menu panels are not assigned on gameplay scenes.
+        if (mainPanel != null || levelPanel != null || optionPanel != null)
+        {
+            ShowMainPanel();
+        }
 
         // Cập nhật UI
         UpdateVolumeUI();
@@ -64,23 +70,23 @@ public class ButtonManager : MonoBehaviour
 
     public void play()
     {
-        SceneManager.LoadScene("Level_2");
+        SceneManager.LoadScene("Test");
     }
 
 
     public void OpenLevelPanel()
     {
-        mainPanel.SetActive(false);
-        levelPanel.SetActive(true);
-        optionPanel.SetActive(false);
+        if (mainPanel != null) mainPanel.SetActive(false);
+        if (levelPanel != null) levelPanel.SetActive(true);
+        if (optionPanel != null) optionPanel.SetActive(false);
     }
 
 
     public void OpenOptionPanel()
     {
-        mainPanel.SetActive(false);
-        levelPanel.SetActive(false);
-        optionPanel.SetActive(true);
+        if (mainPanel != null) mainPanel.SetActive(false);
+        if (levelPanel != null) levelPanel.SetActive(false);
+        if (optionPanel != null) optionPanel.SetActive(true);
     }
 
 
@@ -92,9 +98,9 @@ public class ButtonManager : MonoBehaviour
 
     private void ShowMainPanel()
     {
-        mainPanel.SetActive(true);
-        levelPanel.SetActive(false);
-        optionPanel.SetActive(false);
+        if (mainPanel != null) mainPanel.SetActive(true);
+        if (levelPanel != null) levelPanel.SetActive(false);
+        if (optionPanel != null) optionPanel.SetActive(false);
     }
 
 
@@ -104,7 +110,7 @@ public class ButtonManager : MonoBehaviour
 
     public void LoadLevel1()
     {
-        SceneManager.LoadScene("Level_1");
+        SceneManager.LoadScene("Test");
     }
 
 
@@ -298,5 +304,10 @@ public class ButtonManager : MonoBehaviour
     public void Back()
     {
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void NextLevel()
+    {
+        SceneManager.LoadScene(nextLevelScene);
     }
 }

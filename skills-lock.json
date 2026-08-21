@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "skills": {
+    "unity-animation": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-animation/SKILL.md",
+      "computedHash": "6ed37e90206e5534f2bc1e3c5a5176cfdf0a4b1b2ccfbf0a935d618122a15721"
+    },
+    "unity-build-pipeline": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-build-pipeline/SKILL.md",
+      "computedHash": "7d7397a9b386773afe05ffd2df8019520e57abcf55f87899107f8ad06ab3e3e4"
+    },
+    "unity-csharp-scripting": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-csharp-scripting/SKILL.md",
+      "computedHash": "050e5798e44ffe1fbd62126db21370977de156a2bb2ff6eeff6a6088cee42920"
+    },
+    "unity-input-system": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-input-system/SKILL.md",
+      "computedHash": "18cc67db34f8cfc0595208fb0ae46d39a9376add722b2efbc709554df753a4f9"
+    },
+    "unity-navmesh": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-navmesh/SKILL.md",
+      "computedHash": "326c3cab680657c6ec29c81dc0d7101b47983fddf1b021fc10b0d61c478f40f5"
+    },
+    "unity-physics": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-physics/SKILL.md",
+      "computedHash": "7f30a127e0ef247ab57500dfce5bd60aebca327c1c7a25d239bd3609fc1a1aad"
+    },
+    "unity-scriptableobjects": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-scriptableobjects/SKILL.md",
+      "computedHash": "5e30fd4e71f4ee7abd8c56ff4ad01dea47f1b6c645be97d84e7465adb09b93ca"
+    },
+    "unity-tilemap-2d": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-tilemap-2d/SKILL.md",
+      "computedHash": "7f1122e6ee7b92307a0778bf705537d133b56dfc405ec553bfa10c6cc3c32205"
+    }
+  }
+}
