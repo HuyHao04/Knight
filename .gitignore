@@ -1,0 +1,50 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Unity generated files
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity build and crash artifacts
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
+*.zip
+*.tar.gz
+crashlytics-build.properties
+sysinfo.txt
+
+# IDE and OS files
+.vs/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Addressables and Unity Cloud generated data
+Assets/AddressableAssetsData/*/*.bin*
+Assets/StreamingAssets/aa/
+Assets/StreamingAssets/aa.meta
+
+# Auto-generated Visual Studio solution
+ExportedObj/
+*.unityproj

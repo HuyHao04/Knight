@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - ground
+  - hole
+  - gate
+  - Coin
+  - enemy
+  - Heart
+  - NPC
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: BackGround
+    uniqueID: 2893452963
+    locked: 0
+  - name: Decorlayer1
+    uniqueID: 1902516035
+    locked: 0
+  - name: Decorlayer2
+    uniqueID: 865314929
+    locked: 0
+  - name: Ground
+    uniqueID: 3688638273
+    locked: 0
+  - name: Decorlayer3
+    uniqueID: 2389408483
+    locked: 0
+  - name: Character
+    uniqueID: 4126573861
+    locked: 0
+  - name: Item
+    uniqueID: 1478451493
+    locked: 0
+  - name: Enemy
+    uniqueID: 4231511307
+    locked: 0
+  m_RenderingLayers:
+  - Default
+  m_MigratedRenderPipelines: []
