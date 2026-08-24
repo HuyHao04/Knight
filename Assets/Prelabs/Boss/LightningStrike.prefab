@@ -222,7 +222,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LightningStrike
   warningObject: {fileID: 7805680492894506621}
   lightningObject: {fileID: 899858857870080012}
-  warningTime: 0.8
+  warningTime: 1
   lightningDuration: 0.4
   damage: 3
 --- !u!1 &3824412624779474044
@@ -302,11 +302,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -63455989
+  m_SortingLayer: 8
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 153761484364368590, guid: ffcf8aaa0a8ef4440bdbec8b0fff7b07, type: 3}
+  m_Sprite: {fileID: 475513406931832269, guid: 70783d18ecbbefd40ad6c5c73ae268aa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
