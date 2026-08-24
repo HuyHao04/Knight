@@ -70,7 +70,7 @@ public class ButtonManager : MonoBehaviour
 
     public void play()
     {
-        SceneManager.LoadScene("Test");
+        SceneManager.LoadScene("Level_1");
     }
 
 

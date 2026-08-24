@@ -37,6 +37,7 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded = true;
     private bool isDead = false;
     private bool canTakeDamage = true;
+    private bool levelCompleted = false;
 
     void Start()
     {
@@ -51,7 +52,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (isDead) return;
+        if (isDead || levelCompleted) return;
 
         Move();
         Jump();
@@ -211,21 +212,7 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                // Va chạm ngang -> mất máu
-                if (canTakeDamage)
-                {
-                    HP -= 2;
-                    AudioManager.instance.PlayHurt();
-
-                    HPText.text = "HP: " + HP;
-
-                    StartCoroutine(DamageCooldown());
-
-                    if (HP <= 0)
-                    {
-                        Dead();
-                    }
-                }
+                TakeDamage(2);
             }
         }
     }
@@ -256,29 +243,44 @@ public class PlayerController : MonoBehaviour
 
         if (collision.CompareTag("gate"))
         {
-            AudioManager.instance.PlayVictory();
-            HPText.gameObject.SetActive(false);
-            score.gameObject.SetActive(false);
-
-            victoryHP.text = "HP Remaining : " + HP;
-            victoryScore.text = "Coins : " + coin;
-            victoryKill.text = "Enemies Defeated : " + enemyKill;
-
-            VictoryPanel.SetActive(true);
+            CompleteLevel();
             Destroy(gameObject, 0.5f);
         }
     }
+
+    public void CompleteLevel()
+    {
+        if (levelCompleted)
+            return;
+
+        levelCompleted = true;
+        AudioManager.instance.PlayVictory();
+        HPText.gameObject.SetActive(false);
+        score.gameObject.SetActive(false);
+
+        victoryHP.text = "HP Remaining : " + HP;
+        victoryScore.text = "Coins : " + coin;
+        victoryKill.text = "Enemies Defeated : " + enemyKill;
+        VictoryPanel.SetActive(true);
+    }
     public void TakeDamage(int damage)
 {
-    if (isDead) return;
+    if (isDead)
+        return;
 
-    if (!canTakeDamage) return;
+    if (!canTakeDamage)
+        return;
 
     HP -= damage;
 
-    AudioManager.instance.PlayHurt();
+    HP = Mathf.Max(HP, 0);
 
     HPText.text = "HP: " + HP;
+
+    if (AudioManager.instance != null)
+    {
+        AudioManager.instance.PlayHurt();
+    }
 
     StartCoroutine(DamageCooldown());
 
