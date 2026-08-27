@@ -103,6 +103,7 @@ public class SkeletonArcher : MonoBehaviour
     }
     public void Die()
 {
+    GetComponent<ScoreReward>()?.TryAwardDefeat();
     Destroy(gameObject);
 }
 }

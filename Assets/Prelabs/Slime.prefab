@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 8146031119459468524}
   - component: {fileID: 6631548081538052259}
   - component: {fileID: 3118530519722754268}
+  - component: {fileID: 5598493398356310727}
+  - component: {fileID: 4429083315576319012}
   m_Layer: 0
   m_Name: Slime
   m_TagString: enemy
@@ -181,7 +183,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   moveSpeed: 2
-  patrolDistance: 3
+  patrolDistance: 10
   detectRange: 5
 --- !u!95 &3118530519722754268
 Animator:
@@ -205,3 +207,29 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5598493398356310727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7779346561697969002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 502967fea489ffd45b7893524822c4e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScoreReward
+  scoreValue: 200
+--- !u!114 &4429083315576319012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7779346561697969002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8ac78c1829464044950130c8eb69b78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ContactDamage
+  damage: 1

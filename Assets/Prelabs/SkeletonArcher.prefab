@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 8029720098133409512}
   - component: {fileID: 6964906156178813110}
   - component: {fileID: 4746039265490148989}
+  - component: {fileID: 8690226030662862916}
+  - component: {fileID: 6360482720963618486}
   m_Layer: 0
   m_Name: SkeletonArcher
   m_TagString: enemy
@@ -171,7 +173,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.8666667, y: 1.4444444}
+    oldSize: {x: 1.3, y: 2.1666667}
     newSize: {x: 0.39, y: 0.65}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -179,6 +181,32 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.8666667, y: 1.4444444}
   m_EdgeRadius: 0
+--- !u!114 &8690226030662862916
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 866977638625771092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 502967fea489ffd45b7893524822c4e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScoreReward
+  scoreValue: 300
+--- !u!114 &6360482720963618486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 866977638625771092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8ac78c1829464044950130c8eb69b78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ContactDamage
+  damage: 2
 --- !u!1 &6889110329804189597
 GameObject:
   m_ObjectHideFlags: 0

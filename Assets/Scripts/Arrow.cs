@@ -5,6 +5,7 @@ public class Arrow : MonoBehaviour
     [Header("Arrow Settings")]
     [SerializeField] private float speed = 8f;
     [SerializeField] private float lifeTime = 5f;
+    [SerializeField, Min(0)] private int damage = 2;
 
     private Vector2 direction;
 
@@ -41,7 +42,7 @@ public class Arrow : MonoBehaviour
 
             if (player != null)
             {
-                player.TakeDamage(2);
+                player.TakeDamage(damage);
             }
 
             Destroy(gameObject);

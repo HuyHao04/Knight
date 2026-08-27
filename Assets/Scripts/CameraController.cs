@@ -30,4 +30,15 @@ public class CameraController : MonoBehaviour
         }
         transform.position = new Vector3(cameraX, cameraY, cameraZ);
     }
+
+    public void SnapToPlayer()
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        float snappedX = Mathf.Clamp(player.transform.position.x, startCamera, endCamera);
+        transform.position = new Vector3(snappedX, transform.position.y, transform.position.z);
+    }
 }

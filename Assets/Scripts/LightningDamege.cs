@@ -17,15 +17,12 @@ public class LightningDamage : MonoBehaviour
         if (lightningStrike == null)
             return;
 
-        if (!lightningStrike.CanDamage())
-            return;
-
         PlayerController player =
             collision.GetComponent<PlayerController>();
 
         if (player != null)
         {
-            player.TakeDamage(lightningStrike.GetDamage());
+            lightningStrike.TryDamage(player);
         }
     }
 }

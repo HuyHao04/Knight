@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class NecromancerBoss : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class NecromancerBoss : MonoBehaviour
     private bool isPhase2 = false;
     private bool isChangingPhase = false;
     private bool isInvincible = false;
+    private bool combatStarted = false;
 
 
     // ==================================================
@@ -36,6 +38,9 @@ public class NecromancerBoss : MonoBehaviour
 
     [SerializeField] private string attackTriggerName = "Attack";
     [SerializeField] private string movingBoolName = "IsMoving";
+    [SerializeField] private string lightningCastingBoolName = "IsCastingLightning";
+    [SerializeField] private string obeliskHitBoolName = "IsObeliskHit";
+    [SerializeField] private string obeliskFallStunBoolName = "IsObeliskFallStun";
 
 
     // ==================================================
@@ -103,8 +108,21 @@ public class NecromancerBoss : MonoBehaviour
 
     [SerializeField] private GameObject phaseFlashPrefab;
 
-    // Nếu để None:
-    // Flash sẽ spawn ngay tại vị trí Boss
+    [SerializeField] private GameObject phaseAuraPrefab;
+
+    // Hiệu ứng luôn xuất hiện theo world position hiện tại của boss.
+    // Không dùng phaseFlashPoint làm vị trí spawn để tránh hiệu ứng bị bỏ lại
+    // ở một marker cũ trong scene.
+    [SerializeField] private Vector3 phaseFlashOffset = Vector3.zero;
+
+    // Aura là child của boss, vì vậy offset này là local position.
+    [SerializeField] private Vector3 phaseAuraOffset = Vector3.zero;
+
+    private GameObject currentPhaseAura;
+    private readonly List<GameObject> activeSkillInstances = new List<GameObject>();
+
+    // Marker cũ trong scene, giữ lại để không làm mất Inspector reference cũ.
+    // Phase 2 dùng phaseFlashOffset để Flash luôn xuất hiện ngay trên boss.
     [SerializeField] private Transform phaseFlashPoint;
 
     // Boss tới BossSkillPosition rồi đứng yên một chút
@@ -126,6 +144,16 @@ public class NecromancerBoss : MonoBehaviour
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private Transform castPoint;
 
+    [Header("Phase 2 Fireball Storm")]
+    [SerializeField, Min(2)] private int phase2FireballCount = 16;
+    [SerializeField, Min(0.02f)] private float phase2FireballShotInterval = 0.1f;
+    [SerializeField, Min(0f)] private float phase2FireballMinSpawnOffset = 0.15f;
+    [SerializeField, Min(0f)] private float phase2FireballMaxSpawnOffset = 0.65f;
+    [SerializeField, Min(1)] private int phase2FireballAimedShotEvery = 4;
+    [SerializeField, Range(0f, 45f)] private float phase2FireballAimJitter = 10f;
+
+    private bool isUsingFireballStorm;
+
 
     // ==================================================
     // GROUND SPELL
@@ -141,7 +169,7 @@ public class NecromancerBoss : MonoBehaviour
 
     [SerializeField] private float groundRayDistance = 20f;
 
-    [SerializeField] private float rayStartHeight = 5f;
+    [SerializeField, Min(0.01f)] private float groundSpellRayStartOffset = 0.05f;
 
 
     // ==================================================
@@ -225,6 +253,20 @@ public class NecromancerBoss : MonoBehaviour
 
 
     // ==================================================
+    // TWO OBELISK COUNTER
+    // ==================================================
+
+    [Header("Two Obelisk Counter")]
+    [SerializeField] private ObeliskManager obeliskManager;
+    [SerializeField] private Transform obeliskBeamTarget;
+    [SerializeField, Min(0.1f)] private float obeliskStunDuration = 2.5f;
+
+    private bool lightningInterrupted;
+    private bool obeliskCounterResolved;
+    private bool isObeliskStunned;
+
+
+    // ==================================================
     // PLAYER
     // ==================================================
 
@@ -243,11 +285,25 @@ public class NecromancerBoss : MonoBehaviour
     private Collider2D bossCollider;
 
 
+    // Vị trí đứng yên hợp lệ sau khi boss kết thúc một skill chủ động.
+    // Chỉ khóa trục X khi Idle, không can thiệp Charge / Lightning / đổi Phase.
+    private float idleAnchorX;
+
+    private bool hasIdleAnchor;
+
+
     // ==================================================
     // TIMER
     // ==================================================
 
     private float attackTimer = 0f;
+    private Vector3 initialPosition;
+    private Quaternion initialRotation;
+
+    public bool IsDefeated => isDead;
+    public Transform ObeliskBeamTarget => obeliskBeamTarget != null
+        ? obeliskBeamTarget
+        : transform;
 
 
     // ==================================================
@@ -256,6 +312,8 @@ public class NecromancerBoss : MonoBehaviour
 
     private void Start()
     {
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
         // ==============================================
         // HEALTH
         // ==============================================
@@ -275,6 +333,10 @@ public class NecromancerBoss : MonoBehaviour
 
         bossCollider =
             GetComponent<Collider2D>();
+
+
+        ConfigureIdlePhysics();
+        SetIdleAnchorToCurrentPosition();
 
 
         if (animator == null)
@@ -318,10 +380,202 @@ public class NecromancerBoss : MonoBehaviour
                 currentHP,
                 maxHP
             );
+
+            bossHealthBar.gameObject.SetActive(false);
         }
 
 
         attackTimer = 0f;
+    }
+
+    public void StartCombat()
+    {
+        if (isDead || combatStarted)
+        {
+            return;
+        }
+
+        combatStarted = true;
+        isInvincible = false;
+        attackTimer = 0f;
+
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.SetHealth(currentHP, maxHP);
+            bossHealthBar.gameObject.SetActive(true);
+        }
+
+        FacePlayer();
+    }
+
+    /// <summary>
+    /// Returns the boss encounter to its initial phase after the player respawns.
+    /// It is intentionally called on player death only, never from Update.
+    /// </summary>
+    public void ResetBossEncounter()
+    {
+        StopAllCoroutines();
+        CleanupActiveSkills();
+
+        if (currentPhaseAura != null)
+        {
+            Destroy(currentPhaseAura);
+            currentPhaseAura = null;
+        }
+
+        currentHP = maxHP;
+        isDead = false;
+        isPhase2 = false;
+        isChangingPhase = false;
+        isInvincible = false;
+        isCharging = false;
+        chargeHitPlayer = false;
+        isUsingLightning = false;
+        isUsingFireballStorm = false;
+        lightningInterrupted = false;
+        obeliskCounterResolved = false;
+        isObeliskStunned = false;
+        attackTimer = 0f;
+        lastStrongSkillTime = -999f;
+
+        if (bossCollider != null)
+        {
+            bossCollider.enabled = true;
+        }
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = true;
+            spriteRenderer.color = Color.white;
+        }
+
+        obeliskManager?.ResetEncounter();
+
+        transform.SetPositionAndRotation(initialPosition, initialRotation);
+
+        if (rb != null)
+        {
+            rb.simulated = true;
+            rb.position = initialPosition;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        if (animator != null)
+        {
+            animator.Rebind();
+            animator.Update(0f);
+        }
+
+        SetMoving(false);
+        SetLightningCasting(false);
+        SetObeliskHitAnimation(false);
+        SetObeliskFallStunAnimation(false);
+        SetIdleAnchorToCurrentPosition();
+
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.SetHealth(currentHP, maxHP);
+            bossHealthBar.gameObject.SetActive(combatStarted);
+        }
+    }
+
+    private void TrackActiveSkill(GameObject skillInstance)
+    {
+        if (skillInstance != null)
+        {
+            activeSkillInstances.Add(skillInstance);
+        }
+    }
+
+    private void CleanupActiveSkills()
+    {
+        foreach (GameObject skillInstance in activeSkillInstances)
+        {
+            if (skillInstance != null)
+            {
+                Destroy(skillInstance);
+            }
+        }
+
+        activeSkillInstances.Clear();
+    }
+
+
+    // ==================================================
+    // IDLE PHYSICS
+    // ==================================================
+
+    private void ConfigureIdlePhysics()
+    {
+        if (rb == null)
+        {
+            Debug.LogWarning(
+                "NecromancerBoss: Missing Rigidbody2D. Idle physics lock is disabled."
+            );
+
+            return;
+        }
+
+
+        // Preserve all existing constraints; only prevent collision torque from
+        // rotating the boss around Z.
+        rb.constraints |=
+            RigidbodyConstraints2D.FreezeRotation;
+    }
+
+
+    private void FixedUpdate()
+    {
+        if (
+            rb == null ||
+            isDead ||
+            !rb.simulated ||
+            isCharging ||
+            isUsingLightning ||
+            isChangingPhase
+        )
+        {
+            return;
+        }
+
+
+        // Player contact must not give an idle boss horizontal momentum or spin.
+        rb.linearVelocity =
+            new Vector2(
+                0f,
+                rb.linearVelocity.y
+            );
+
+        rb.angularVelocity =
+            0f;
+
+
+        // Collision resolution can still create tiny position drift even when
+        // horizontal velocity is reset. Keep the boss at its latest valid idle X.
+        if (hasIdleAnchor)
+        {
+            rb.position =
+                new Vector2(
+                    idleAnchorX,
+                    rb.position.y
+                );
+        }
+    }
+
+
+    private void SetIdleAnchorToCurrentPosition()
+    {
+        if (rb == null)
+            return;
+
+
+        idleAnchorX =
+            transform.position.x;
+
+
+        hasIdleAnchor =
+            true;
     }
 
 
@@ -345,6 +599,9 @@ public class NecromancerBoss : MonoBehaviour
 
         FacePlayer();
 
+        if (!combatStarted)
+            return;
+
 
         // ==============================================
         // BOSS ĐANG BẬN
@@ -359,6 +616,14 @@ public class NecromancerBoss : MonoBehaviour
 
 
         if (isUsingLightning)
+            return;
+
+
+        if (isUsingFireballStorm)
+            return;
+
+
+        if (isObeliskStunned)
             return;
 
 
@@ -701,6 +966,36 @@ public class NecromancerBoss : MonoBehaviour
         );
     }
 
+    private void SetLightningCasting(bool casting)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.SetBool(lightningCastingBoolName, casting);
+    }
+
+    private void SetObeliskHitAnimation(bool hit)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.SetBool(obeliskHitBoolName, hit);
+    }
+
+    private void SetObeliskFallStunAnimation(bool active)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.SetBool(obeliskFallStunBoolName, active);
+    }
+
 
     // ==================================================
     // PLAYER GROUND CHECK
@@ -793,45 +1088,126 @@ public class NecromancerBoss : MonoBehaviour
         }
 
 
-        // ==============================================
-        // ANIMATION
-        // ==============================================
+        if (!isPhase2)
+        {
+            PlayAttackAnimation();
 
+            Vector2 direction =
+                (
+                    player.position -
+                    castPoint.position
+                ).normalized;
+
+            SpawnFireball(direction, 0f);
+            return;
+        }
+
+        if (!isUsingFireballStorm)
+        {
+            StartCoroutine(Phase2FireballStorm());
+        }
+    }
+
+    private IEnumerator Phase2FireballStorm()
+    {
+        isUsingFireballStorm = true;
         PlayAttackAnimation();
 
+        int fireballCount = Mathf.Max(2, phase2FireballCount);
+        int aimedShotEvery = Mathf.Max(1, phase2FireballAimedShotEvery);
+        float minSpawnOffset = Mathf.Min(
+            phase2FireballMinSpawnOffset,
+            phase2FireballMaxSpawnOffset
+        );
+        float maxSpawnOffset = Mathf.Max(
+            phase2FireballMinSpawnOffset,
+            phase2FireballMaxSpawnOffset
+        );
 
-        // ==============================================
-        // DIRECTION
-        // ==============================================
+        for (int index = 0; index < fireballCount; index++)
+        {
+            if (isDead || !combatStarted || !isPhase2)
+                break;
 
-        Vector2 direction =
+            bool isAimedShot = index % aimedShotEvery == 0;
+            Vector2 direction = isAimedShot
+                ? GetJitteredDirectionToPlayer()
+                : GetRandomStormDirection();
+            float spawnOffset = Random.Range(minSpawnOffset, maxSpawnOffset);
+
+            SpawnFireball(direction, spawnOffset);
+
+            if (index < fireballCount - 1)
+            {
+                yield return new WaitForSeconds(
+                    Mathf.Max(0.02f, phase2FireballShotInterval)
+                );
+            }
+        }
+
+        isUsingFireballStorm = false;
+        attackTimer = 0f;
+    }
+
+    private Vector2 GetJitteredDirectionToPlayer()
+    {
+        Vector2 directionToPlayer =
             (
                 player.position -
                 castPoint.position
             ).normalized;
 
+        float jitter = Random.Range(
+            -phase2FireballAimJitter,
+            phase2FireballAimJitter
+        );
+        Vector3 rotatedDirection =
+            Quaternion.Euler(0f, 0f, jitter) * directionToPlayer;
 
-        // ==============================================
-        // SPAWN
-        // ==============================================
+        return new Vector2(rotatedDirection.x, rotatedDirection.y).normalized;
+    }
 
-        GameObject projectile =
-            Instantiate(
-                projectilePrefab,
-                castPoint.position,
-                Quaternion.identity
-            );
+    private Vector2 GetRandomStormDirection()
+    {
+        // The reference pattern fills the air irregularly instead of producing
+        // one evenly-spaced fan. A small downward component is allowed, but the
+        // upward bias prevents most projectiles from dying against the floor as
+        // soon as they leave a ground-level cast point.
+        Vector2 direction = new Vector2(
+            Random.Range(-1f, 1f),
+            Random.Range(-0.15f, 1f)
+        );
 
+        if (direction.sqrMagnitude < 0.04f)
+        {
+            direction = Random.value < 0.5f
+                ? Vector2.left
+                : Vector2.right;
+        }
+
+        return direction.normalized;
+    }
+
+    private void SpawnFireball(Vector2 direction, float spawnOffset)
+    {
+        Vector2 normalizedDirection = direction.normalized;
+        Vector3 spawnPosition = castPoint.position
+            + (Vector3)(normalizedDirection * Mathf.Max(0f, spawnOffset));
+
+        GameObject projectile = Instantiate(
+            projectilePrefab,
+            spawnPosition,
+            Quaternion.identity
+        );
+
+        TrackActiveSkill(projectile);
 
         NecromancerProjectile projectileScript =
             projectile.GetComponent<NecromancerProjectile>();
 
-
         if (projectileScript != null)
         {
-            projectileScript.SetDirection(
-                direction
-            );
+            projectileScript.SetDirection(normalizedDirection);
         }
     }
 
@@ -874,12 +1250,22 @@ public class NecromancerBoss : MonoBehaviour
         // RAYCAST
         // ==============================================
 
-        Vector2 rayStart =
-            new Vector2(
-                player.position.x,
-                player.position.y +
-                rayStartHeight
-            );
+        if (playerCollider == null)
+        {
+            playerCollider = player.GetComponent<Collider2D>();
+        }
+
+        if (playerCollider == null)
+        {
+            return;
+        }
+
+        // Cast from just above the player's feet. Casting from above the player
+        // would incorrectly hit an Obelisk platform hanging over their head.
+        Vector2 rayStart = new Vector2(
+            playerCollider.bounds.center.x,
+            playerCollider.bounds.min.y + groundSpellRayStartOffset
+        );
 
 
         RaycastHit2D hit =
@@ -908,11 +1294,13 @@ public class NecromancerBoss : MonoBehaviour
             );
 
 
-        Instantiate(
+        GameObject groundSpell = Instantiate(
             groundSpellPrefab,
             spawnPosition,
             Quaternion.identity
         );
+
+        TrackActiveSkill(groundSpell);
     }
 
 
@@ -1166,6 +1554,9 @@ public class NecromancerBoss : MonoBehaviour
         SetMoving(false);
 
 
+        SetIdleAnchorToCurrentPosition();
+
+
         isCharging =
             false;
 
@@ -1274,203 +1665,255 @@ public class NecromancerBoss : MonoBehaviour
         }
 
 
-        // ==============================================
-        // START
-        // ==============================================
+        isUsingLightning = true;
+        lightningInterrupted = false;
+        obeliskCounterResolved = false;
+        attackTimer = 0f;
 
-        isUsingLightning =
-            true;
-
-
-        attackTimer =
-            0f;
-
-
-        Vector3 originalPosition =
-            transform.position;
-
-
-        // ==============================================
-        // PHYSICS OFF
-        // ==============================================
+        Vector3 originalPosition = transform.position;
 
         if (rb != null)
         {
-            rb.linearVelocity =
-                Vector2.zero;
-
-
-            rb.simulated =
-                false;
+            rb.linearVelocity = Vector2.zero;
+            rb.simulated = false;
         }
-
-
-        // ==============================================
-        // FLY UP
-        // ==============================================
 
         SetMoving(true);
 
-
-        while (
-            Vector2.Distance(
-                transform.position,
-                bossSkillPosition.position
-            ) > 0.05f
-        )
+        while (Vector2.Distance(transform.position, bossSkillPosition.position) > 0.05f)
         {
-            transform.position =
-                Vector3.MoveTowards(
-                    transform.position,
-                    bossSkillPosition.position,
-                    flySpeed *
-                    Time.deltaTime
-                );
-
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                bossSkillPosition.position,
+                flySpeed * Time.deltaTime
+            );
 
             yield return null;
         }
 
-
-        transform.position =
-            bossSkillPosition.position;
-
-
+        transform.position = bossSkillPosition.position;
         SetMoving(false);
+        SetLightningCasting(true);
 
+        // This explicit call is the only place that enables the obelisks. The
+        // phase transition also uses BossSkillPosition, but never opens a window.
+        obeliskManager?.OpenWindow();
 
-        yield return new WaitForSeconds(
-            delayBeforeWave
-        );
+        yield return WaitForLightningDelay(delayBeforeWave);
+        if (lightningInterrupted)
+        {
+            yield return ResolveInterruptedLightning(originalPosition);
+            yield break;
+        }
 
-
-        // ==============================================
-        // WAVE 1
-        // Point 4,5,6
-        // ==============================================
-
-        Debug.Log(
-            "LIGHTNING WAVE 1"
-        );
-
-
+        Debug.Log("LIGHTNING WAVE 1");
         SpawnLightning(4);
         SpawnLightning(5);
         SpawnLightning(6);
 
+        yield return WaitForLightningDelay(delayBetweenWaves);
+        if (lightningInterrupted)
+        {
+            yield return ResolveInterruptedLightning(originalPosition);
+            yield break;
+        }
 
-        yield return new WaitForSeconds(
-            delayBetweenWaves
-        );
-
-
-        // ==============================================
-        // WAVE 2
-        // Point 2,3,4,6,7,8
-        // ==============================================
-
-        Debug.Log(
-            "LIGHTNING WAVE 2"
-        );
-
-
+        Debug.Log("LIGHTNING WAVE 2");
         SpawnLightning(2);
         SpawnLightning(3);
         SpawnLightning(4);
-
         SpawnLightning(6);
         SpawnLightning(7);
         SpawnLightning(8);
 
+        yield return WaitForLightningDelay(delayBetweenWaves);
+        if (lightningInterrupted)
+        {
+            yield return ResolveInterruptedLightning(originalPosition);
+            yield break;
+        }
 
-        yield return new WaitForSeconds(
-            delayBetweenWaves
-        );
-
-
-        // ==============================================
-        // WAVE 3
-        // Point 1 -> 9
-        // ==============================================
-
-        Debug.Log(
-            "LIGHTNING WAVE 3"
-        );
-
-
-        for (
-            int i = 1;
-            i <= 9;
-            i++
-        )
+        Debug.Log("LIGHTNING WAVE 3");
+        for (int i = 1; i <= 9; i++)
         {
             SpawnLightning(i);
         }
 
-
-        yield return new WaitForSeconds(
-            delayAfterLightning
-        );
-
-
-        // ==============================================
-        // FLY BACK
-        // ==============================================
-
-        SetMoving(true);
-
-
-        while (
-            Vector2.Distance(
-                transform.position,
-                originalPosition
-            ) > 0.05f
-        )
+        yield return WaitForLightningDelay(delayAfterLightning);
+        if (lightningInterrupted)
         {
-            transform.position =
-                Vector3.MoveTowards(
-                    transform.position,
-                    originalPosition,
-                    flySpeed *
-                    Time.deltaTime
-                );
+            yield return ResolveInterruptedLightning(originalPosition);
+            yield break;
+        }
 
+        obeliskManager?.CloseFailedWindow();
+        SetLightningCasting(false);
+        yield return ReturnFromLightning(originalPosition);
+
+        isUsingLightning = false;
+        lightningInterrupted = false;
+        obeliskCounterResolved = false;
+        attackTimer = 0f;
+        FacePlayer();
+    }
+
+    private IEnumerator WaitForLightningDelay(float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration && !lightningInterrupted && !isDead)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private IEnumerator ResolveInterruptedLightning(Vector3 previousGroundPosition)
+    {
+        SetLightningCasting(false);
+
+        // Keep Malakor at BossSkillPosition until the two beams have completed.
+        while (!obeliskCounterResolved && !isDead)
+        {
+            yield return null;
+        }
+
+        if (isDead)
+        {
+            yield break;
+        }
+
+        // Sprite 100 is only visible while both beams are touching the boss.
+        // Once the beams finish, switch to sprite 113 for the fall and stun.
+        SetObeliskHitAnimation(false);
+        SetObeliskFallStunAnimation(true);
+        yield return FallStraightDownAfterObelisk(previousGroundPosition);
+
+        isUsingLightning = false;
+        lightningInterrupted = false;
+        obeliskCounterResolved = false;
+        isObeliskStunned = true;
+        isInvincible = false;
+        attackTimer = 0f;
+        FacePlayer();
+
+        yield return new WaitForSeconds(obeliskStunDuration);
+
+        SetObeliskFallStunAnimation(false);
+        isObeliskStunned = false;
+        attackTimer = 0f;
+        FacePlayer();
+    }
+
+    private IEnumerator FallStraightDownAfterObelisk(Vector3 previousGroundPosition)
+    {
+        float lockedX = transform.position.x;
+        Vector3 landingPosition = FindObeliskFallLandingPosition(
+            lockedX,
+            previousGroundPosition);
+
+        SetMoving(false);
+
+        while (Mathf.Abs(transform.position.y - landingPosition.y) > 0.05f)
+        {
+            Vector3 position = transform.position;
+            position.x = lockedX;
+            position.y = Mathf.MoveTowards(
+                position.y,
+                landingPosition.y,
+                flySpeed * Time.deltaTime);
+            transform.position = position;
 
             yield return null;
         }
 
-
-        transform.position =
-            originalPosition;
-
-
-        SetMoving(false);
-
-
-        // ==============================================
-        // PHYSICS ON
-        // ==============================================
+        transform.position = landingPosition;
 
         if (rb != null)
         {
-            rb.simulated =
-                true;
-
-
-            rb.linearVelocity =
-                Vector2.zero;
+            rb.position = landingPosition;
+            rb.simulated = true;
+            rb.linearVelocity = Vector2.zero;
         }
 
+        SetIdleAnchorToCurrentPosition();
+    }
 
-        isUsingLightning =
-            false;
+    private Vector3 FindObeliskFallLandingPosition(
+        float lockedX,
+        Vector3 previousGroundPosition)
+    {
+        float pivotToFeet = bossCollider != null
+            ? transform.position.y - bossCollider.bounds.min.y
+            : 0f;
+        float requiredDistance = Mathf.Abs(
+            transform.position.y - previousGroundPosition.y) + 5f;
+        float rayDistance = Mathf.Max(groundRayDistance, requiredDistance);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(
+            new Vector2(lockedX, transform.position.y),
+            Vector2.down,
+            rayDistance,
+            groundLayer);
 
+        RaycastHit2D nearestGroundHit = default;
+        float nearestDistance = float.PositiveInfinity;
 
-        attackTimer =
-            0f;
+        foreach (RaycastHit2D hit in hits)
+        {
+            if (hit.collider == null
+                || hit.collider.isTrigger
+                || hit.collider == bossCollider
+                || hit.collider.GetComponentInParent<ObeliskPlatformSurface>() != null)
+            {
+                continue;
+            }
 
+            if (hit.distance < nearestDistance)
+            {
+                nearestDistance = hit.distance;
+                nearestGroundHit = hit;
+            }
+        }
 
-        FacePlayer();
+        float landingY = nearestGroundHit.collider != null
+            ? nearestGroundHit.point.y + pivotToFeet
+            : previousGroundPosition.y;
+
+        if (nearestGroundHit.collider == null)
+        {
+            Debug.LogWarning(
+                "NecromancerBoss: no ground found directly below BossSkillPosition; "
+                + "using the previous grounded Y while keeping the skill-position X.",
+                this);
+        }
+
+        return new Vector3(lockedX, landingY, transform.position.z);
+    }
+
+    private IEnumerator ReturnFromLightning(Vector3 groundPosition)
+    {
+        SetMoving(true);
+
+        while (Vector2.Distance(transform.position, groundPosition) > 0.05f)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                groundPosition,
+                flySpeed * Time.deltaTime
+            );
+
+            yield return null;
+        }
+
+        transform.position = groundPosition;
+        SetMoving(false);
+
+        if (rb != null)
+        {
+            rb.simulated = true;
+            rb.linearVelocity = Vector2.zero;
+        }
+
+        SetIdleAnchorToCurrentPosition();
     }
 
 
@@ -1520,11 +1963,13 @@ public class NecromancerBoss : MonoBehaviour
             );
 
 
-        Instantiate(
+        GameObject lightningStrike = Instantiate(
             lightningStrikePrefab,
             spawnPosition,
             Quaternion.identity
         );
+
+        TrackActiveSkill(lightningStrike);
     }
 
 
@@ -1535,7 +1980,7 @@ public class NecromancerBoss : MonoBehaviour
     public void TakeDamage(
         int damage)
     {
-        if (isDead)
+        if (isDead || !combatStarted)
             return;
 
 
@@ -1554,67 +1999,143 @@ public class NecromancerBoss : MonoBehaviour
         }
 
 
-        // ==============================================
-        // DAMAGE
-        // ==============================================
+        ApplyDamage(damage, true);
+    }
 
-        currentHP -=
-            damage;
+    public bool RequestObeliskCounterInterrupt()
+    {
+        if (isDead
+            || !combatStarted
+            || !isPhase2
+            || isChangingPhase
+            || !isUsingLightning
+            || lightningInterrupted)
+        {
+            return false;
+        }
 
+        lightningInterrupted = true;
+        obeliskCounterResolved = false;
+        SetMoving(false);
+        return true;
+    }
 
-        currentHP =
-            Mathf.Clamp(
-                currentHP,
-                0,
-                maxHP
-            );
+    public bool TakeObeliskDamage(int damage)
+    {
+        if (isDead
+            || !combatStarted
+            || !isPhase2
+            || !isUsingLightning
+            || !lightningInterrupted
+            || damage <= 0)
+        {
+            return false;
+        }
 
+        // This counter hit may bypass temporary flying/transition immunity,
+        // but it never bypasses death or an invalid counter state.
+        ApplyDamage(damage, false);
 
-        // ==============================================
-        // HEALTH BAR
-        // ==============================================
+        if (!isDead)
+        {
+            SetObeliskFallStunAnimation(false);
+            SetObeliskHitAnimation(true);
+        }
+
+        return true;
+    }
+
+    public void CompleteObeliskCounter()
+    {
+        if (!isDead && isUsingLightning && lightningInterrupted)
+        {
+            obeliskCounterResolved = true;
+        }
+    }
+
+    private void ApplyDamage(int damage, bool allowPhaseTransition)
+    {
+        if (damage <= 0 || isDead)
+        {
+            return;
+        }
+
+        currentHP = Mathf.Clamp(currentHP - damage, 0, maxHP);
 
         if (bossHealthBar != null)
         {
-            bossHealthBar.SetHealth(
-                currentHP,
-                maxHP
-            );
+            bossHealthBar.SetHealth(currentHP, maxHP);
         }
 
-
-        Debug.Log(
-            "Necromancer HP: "
-            + currentHP
-            + " / "
-            + maxHP
-        );
-
-
-        // ==============================================
-        // DEAD
-        // ==============================================
+        Debug.Log("Necromancer HP: " + currentHP + " / " + maxHP);
 
         if (currentHP <= 0)
         {
             Die();
+            return;
+        }
+
+        if (allowPhaseTransition
+            && !isPhase2
+            && !isChangingPhase
+            && currentHP <= phase2HP)
+        {
+            StartCoroutine(EnterPhase2());
+        }
+    }
+
+    // ==================================================
+    // PHASE EFFECT VALIDATION
+    // ==================================================
+
+    private void ValidatePhaseEffectPrefab(
+        GameObject effectPrefab,
+        string effectName)
+    {
+        SpriteRenderer effectRenderer =
+            effectPrefab.GetComponentInChildren<SpriteRenderer>(
+                true
+            );
+
+        if (effectRenderer == null)
+        {
+            Debug.LogWarning(
+                effectName
+                + " is missing a SpriteRenderer."
+            );
 
             return;
         }
 
+        if (effectRenderer.sprite == null)
+        {
+            Debug.LogWarning(
+                effectName
+                + " SpriteRenderer has no sprite assigned."
+            );
+        }
 
-        // ==============================================
-        // ENTER PHASE 2
-        // ==============================================
+        if (effectRenderer.color.a <= 0f)
+        {
+            Debug.LogWarning(
+                effectName
+                + " SpriteRenderer alpha is zero."
+            );
+        }
+
+        Animator effectAnimator =
+            effectPrefab.GetComponentInChildren<Animator>(
+                true
+            );
 
         if (
-            !isPhase2 &&
-            !isChangingPhase &&
-            currentHP <= phase2HP
+            effectAnimator == null ||
+            effectAnimator.runtimeAnimatorController == null
         )
         {
-            StartCoroutine(
-                EnterPhase2()
+            Debug.LogWarning(
+                effectName
+                + " has no Animator Controller assigned."
             );
         }
     }
@@ -1745,6 +2266,11 @@ public class NecromancerBoss : MonoBehaviour
         SetMoving(false);
 
 
+        Debug.Log(
+            "Boss reached BossSkillPosition"
+        );
+
+
         // ==============================================
         // WAIT BEFORE FLASH
         // ==============================================
@@ -1759,7 +2285,8 @@ public class NecromancerBoss : MonoBehaviour
         // ==============================================
 
         Debug.Log(
-            "===== PHASE FLASH ====="
+            "Spawning PhaseFlash at: "
+            + (transform.position + phaseFlashOffset)
         );
 
 
@@ -1767,34 +2294,67 @@ public class NecromancerBoss : MonoBehaviour
             null;
 
 
-        if (phaseFlashPrefab != null)
+        if (phaseFlashPrefab == null)
         {
-            Vector3 flashPosition;
-
-
-            if (phaseFlashPoint != null)
-            {
-                flashPosition =
-                    phaseFlashPoint.position;
-            }
-            else
-            {
-                flashPosition =
-                    transform.position;
-            }
-
+            Debug.LogError(
+                "ERROR: PhaseFlash Prefab is not assigned!"
+            );
+        }
+        else
+        {
+            ValidatePhaseEffectPrefab(
+                phaseFlashPrefab,
+                "PhaseFlash"
+            );
 
             flash =
                 Instantiate(
                     phaseFlashPrefab,
-                    flashPosition,
+                    transform.position + phaseFlashOffset,
                     Quaternion.identity
                 );
+
+            TrackActiveSkill(flash);
+
+            Debug.Log(
+                "PhaseFlash created successfully"
+            );
         }
-        else
+
+
+        // Aura được tạo cùng frame với Flash và chỉ bị hủy khi boss chết.
+        if (phaseAuraPrefab == null)
         {
-            Debug.LogWarning(
-                "NecromancerBoss: Chưa gán PhaseFlash Prefab!"
+            Debug.LogError(
+                "ERROR: PhaseAura Prefab is not assigned!"
+            );
+        }
+        else if (currentPhaseAura == null)
+        {
+            Debug.Log(
+                "Spawning PhaseAura"
+            );
+
+            ValidatePhaseEffectPrefab(
+                phaseAuraPrefab,
+                "PhaseAura"
+            );
+
+            currentPhaseAura =
+                Instantiate(
+                    phaseAuraPrefab,
+                    transform
+                );
+
+            currentPhaseAura.transform.localPosition =
+                phaseAuraOffset;
+
+            currentPhaseAura.transform.localRotation =
+                Quaternion.identity;
+
+            Debug.Log(
+                "PhaseAura parent: "
+                + currentPhaseAura.transform.parent.name
             );
         }
 
@@ -1814,6 +2374,10 @@ public class NecromancerBoss : MonoBehaviour
 
         if (flash != null)
         {
+            Debug.Log(
+                "Destroying PhaseFlash"
+            );
+
             Destroy(
                 flash
             );
@@ -1833,7 +2397,7 @@ public class NecromancerBoss : MonoBehaviour
         // ==============================================
 
         Debug.Log(
-            "Boss đang đáp xuống..."
+            "Boss returning to original position"
         );
 
 
@@ -1880,6 +2444,9 @@ public class NecromancerBoss : MonoBehaviour
             rb.linearVelocity =
                 Vector2.zero;
         }
+
+
+        SetIdleAnchorToCurrentPosition();
 
 
         // ==============================================
@@ -1930,10 +2497,24 @@ public class NecromancerBoss : MonoBehaviour
             true;
 
 
+        obeliskManager?.AbortEncounter();
+
+
+        SetLightningCasting(false);
+        SetObeliskHitAnimation(false);
+        SetObeliskFallStunAnimation(false);
+
+
         StopAllCoroutines();
 
 
         SetMoving(false);
+
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.white;
+        }
 
 
         if (rb != null)
@@ -1954,9 +2535,36 @@ public class NecromancerBoss : MonoBehaviour
         }
 
 
+        if (currentPhaseAura != null)
+        {
+            Destroy(
+                currentPhaseAura
+            );
+        }
+
+
         Debug.Log(
             "Necromancer defeated!"
         );
+
+        ScoreReward scoreReward = GetComponent<ScoreReward>();
+        if (scoreReward != null)
+        {
+            scoreReward.TryAwardDefeat();
+        }
+
+        PlayerController playerController = player != null
+            ? player.GetComponent<PlayerController>()
+            : FindFirstObjectByType<PlayerController>();
+
+        if (playerController != null)
+        {
+            playerController.CompleteLevel();
+        }
+        else
+        {
+            Debug.LogError("NecromancerBoss could not show Victory Panel because PlayerController was not found.");
+        }
 
 
         Destroy(

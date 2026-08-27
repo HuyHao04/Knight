@@ -43,12 +43,34 @@ public class ButtonManager : MonoBehaviour
 
     private void Start()
     {
-        // Load volume đã lưu
-        musicVolume = PlayerPrefs.GetFloat("MusicVolume", 1f);
-        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1f);
-
-        musicMuted = PlayerPrefs.GetInt("MusicMuted", 0) == 1;
-        sfxMuted = PlayerPrefs.GetInt("SFXMuted", 0) == 1;
+        // AudioManager is the source of truth whenever it already exists.
+        // This prevents the Options UI and real audio from getting out of sync.
+        if (AudioManager.instance != null)
+        {
+            musicVolume = AudioManager.instance.MusicVolume;
+            sfxVolume = AudioManager.instance.SfxVolume;
+            musicMuted = AudioManager.instance.MusicMuted;
+            sfxMuted = AudioManager.instance.SfxMuted;
+        }
+        else
+        {
+            musicVolume = PlayerPrefs.GetFloat(
+                AudioManager.MusicVolumeKey,
+                1f
+            );
+            sfxVolume = PlayerPrefs.GetFloat(
+                AudioManager.SfxVolumeKey,
+                1f
+            );
+            musicMuted = PlayerPrefs.GetInt(
+                AudioManager.MusicMutedKey,
+                0
+            ) == 1;
+            sfxMuted = PlayerPrefs.GetInt(
+                AudioManager.SfxMutedKey,
+                0
+            ) == 1;
+        }
 
         // Main-menu panels are not assigned on gameplay scenes.
         if (mainPanel != null || levelPanel != null || optionPanel != null)
@@ -110,7 +132,7 @@ public class ButtonManager : MonoBehaviour
 
     public void LoadLevel1()
     {
-        SceneManager.LoadScene("Test");
+        SceneManager.LoadScene("Level_1");
     }
 
 
@@ -122,7 +144,7 @@ public class ButtonManager : MonoBehaviour
 
     public void LoadLevel3()
     {
-        SceneManager.LoadScene("Level_3");
+        SceneManager.LoadScene("Boss");
     }
 
 
@@ -135,8 +157,6 @@ public class ButtonManager : MonoBehaviour
         musicVolume += 0.1f;
 
         musicVolume = Mathf.Clamp01(musicVolume);
-
-        musicMuted = false;
 
         SaveVolume();
         UpdateVolumeUI();
@@ -156,10 +176,30 @@ public class ButtonManager : MonoBehaviour
     }
 
 
+    // Compatible with Slider.onValueChanged(float), if sliders are added later.
+    public void SetMusicVolume(float value)
+    {
+        musicVolume = Mathf.Clamp01(value);
+        SaveVolume();
+        UpdateVolumeUI();
+        ApplyVolume();
+    }
+
+
     public void ToggleMusic()
     {
         musicMuted = !musicMuted;
 
+        SaveVolume();
+        UpdateVolumeUI();
+        ApplyVolume();
+    }
+
+
+    // Compatible with Toggle.onValueChanged(bool), if toggles are added later.
+    public void SetMusicMuted(bool muted)
+    {
+        musicMuted = muted;
         SaveVolume();
         UpdateVolumeUI();
         ApplyVolume();
@@ -175,8 +215,6 @@ public class ButtonManager : MonoBehaviour
         sfxVolume += 0.1f;
 
         sfxVolume = Mathf.Clamp01(sfxVolume);
-
-        sfxMuted = false;
 
         SaveVolume();
         UpdateVolumeUI();
@@ -196,10 +234,30 @@ public class ButtonManager : MonoBehaviour
     }
 
 
+    // Compatible with Slider.onValueChanged(float), if sliders are added later.
+    public void SetSFXVolume(float value)
+    {
+        sfxVolume = Mathf.Clamp01(value);
+        SaveVolume();
+        UpdateVolumeUI();
+        ApplyVolume();
+    }
+
+
     public void ToggleSFX()
     {
         sfxMuted = !sfxMuted;
 
+        SaveVolume();
+        UpdateVolumeUI();
+        ApplyVolume();
+    }
+
+
+    // Compatible with Toggle.onValueChanged(bool), if toggles are added later.
+    public void SetSFXMuted(bool muted)
+    {
+        sfxMuted = muted;
         SaveVolume();
         UpdateVolumeUI();
         ApplyVolume();
@@ -215,13 +273,10 @@ public class ButtonManager : MonoBehaviour
         if (AudioManager.instance == null)
             return;
 
-        AudioManager.instance.SetMusicVolume(
-            musicMuted ? 0f : musicVolume
-        );
-
-        AudioManager.instance.SetSFXVolume(
-            sfxMuted ? 0f : sfxVolume
-        );
+        AudioManager.instance.SetMusicVolume(musicVolume);
+        AudioManager.instance.SetSFXVolume(sfxVolume);
+        AudioManager.instance.SetMusicMuted(musicMuted);
+        AudioManager.instance.SetSFXMuted(sfxMuted);
     }
 
 
@@ -268,16 +323,16 @@ public class ButtonManager : MonoBehaviour
 
     private void SaveVolume()
     {
-        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
-        PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
+        PlayerPrefs.SetFloat(AudioManager.MusicVolumeKey, musicVolume);
+        PlayerPrefs.SetFloat(AudioManager.SfxVolumeKey, sfxVolume);
 
         PlayerPrefs.SetInt(
-            "MusicMuted",
+            AudioManager.MusicMutedKey,
             musicMuted ? 1 : 0
         );
 
         PlayerPrefs.SetInt(
-            "SFXMuted",
+            AudioManager.SfxMutedKey,
             sfxMuted ? 1 : 0
         );
 

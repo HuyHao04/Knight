@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -29,6 +30,9 @@ public class DialogueManager : MonoBehaviour
 
     private int currentLine = 0;
     private bool isDialogueActive = false;
+    private DialogueLine[] activeDialogueLines;
+    private Action dialogueCompleted;
+    private bool releasePlayerOnEnd = true;
 
     private void Start()
     {
@@ -46,15 +50,26 @@ public class DialogueManager : MonoBehaviour
 
     public void StartDialogue()
     {
-        if (isDialogueActive)
-            return;
+        StartDialogue(dialogueLines, null, true);
+    }
 
-        if (dialogueLines == null || dialogueLines.Length == 0)
+    public bool StartDialogue(
+        DialogueLine[] lines,
+        Action onCompleted,
+        bool releaseControlWhenFinished = true)
+    {
+        if (isDialogueActive)
+            return false;
+
+        if (lines == null || lines.Length == 0)
         {
             Debug.LogWarning("DialogueManager: Chưa có dialogue!");
-            return;
+            return false;
         }
 
+        activeDialogueLines = lines;
+        dialogueCompleted = onCompleted;
+        releasePlayerOnEnd = releaseControlWhenFinished;
         isDialogueActive = true;
         currentLine = 0;
 
@@ -64,11 +79,12 @@ public class DialogueManager : MonoBehaviour
         // Khóa Player
         if (playerController != null)
         {
-            playerController.enabled = false;
+            playerController.SetControlEnabled(false);
         }
 
         // Hiển thị câu đầu tiên
         ShowCurrentDialogue();
+        return true;
     }
 
     // =========================================================
@@ -77,14 +93,16 @@ public class DialogueManager : MonoBehaviour
 
     private void ShowCurrentDialogue()
     {
-        if (currentLine < 0 || currentLine >= dialogueLines.Length)
+        if (activeDialogueLines == null
+            || currentLine < 0
+            || currentLine >= activeDialogueLines.Length)
             return;
 
-        nameText.text = dialogueLines[currentLine].speaker;
-        dialogueText.text = dialogueLines[currentLine].text;
+        nameText.text = activeDialogueLines[currentLine].speaker;
+        dialogueText.text = activeDialogueLines[currentLine].text;
 
         // Nếu là câu cuối thì có thể đổi chữ Button
-        if (currentLine == dialogueLines.Length - 1)
+        if (currentLine == activeDialogueLines.Length - 1)
         {
             nextButton.GetComponentInChildren<TextMeshProUGUI>().text = "END";
         }
@@ -106,7 +124,7 @@ public class DialogueManager : MonoBehaviour
         currentLine++;
 
         // Nếu vẫn còn câu thoại
-        if (currentLine < dialogueLines.Length)
+        if (activeDialogueLines != null && currentLine < activeDialogueLines.Length)
         {
             ShowCurrentDialogue();
         }
@@ -128,10 +146,17 @@ public class DialogueManager : MonoBehaviour
         dialoguePanel.SetActive(false);
 
         // Cho Player hoạt động lại
-        if (playerController != null)
+        if (releasePlayerOnEnd && playerController != null)
         {
-            playerController.enabled = true;
+            playerController.SetControlEnabled(true);
         }
+
+        Action completedCallback = dialogueCompleted;
+        dialogueCompleted = null;
+        activeDialogueLines = null;
+        releasePlayerOnEnd = true;
+
+        completedCallback?.Invoke();
 
         Debug.Log("Dialogue finished.");
     }

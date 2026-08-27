@@ -12,9 +12,10 @@ public class LightningStrike : MonoBehaviour
     [SerializeField] private float lightningDuration = 0.4f;
 
     [Header("Damage")]
-    [SerializeField] private int damage = 3;
+    [SerializeField, Min(0)] private int damage = 3;
 
     private bool canDamage = false;
+    private bool hasHitPlayer = false;
 
     private void Start()
     {
@@ -52,13 +53,14 @@ public class LightningStrike : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public bool CanDamage()
+    public void TryDamage(PlayerController player)
     {
-        return canDamage;
-    }
+        if (!canDamage || hasHitPlayer || player == null)
+        {
+            return;
+        }
 
-    public int GetDamage()
-    {
-        return damage;
+        hasHitPlayer = true;
+        player.TakeDamage(damage);
     }
 }

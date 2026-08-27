@@ -14,9 +14,10 @@ GameObject:
   - component: {fileID: 129331460213558242}
   - component: {fileID: 8262260266405805584}
   - component: {fileID: 446558450013222260}
+  - component: {fileID: 5800838257837154680}
   m_Layer: 0
   m_Name: Bat
-  m_TagString: Untagged
+  m_TagString: enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -46,11 +47,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bea4ab6f3eebbb942bb4ad2589280d4c, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BatController
   moveSpeed: 5
-  damage: 2
-  destroyDistance: 3
+  damage: 1
 --- !u!212 &8170789828196982557
 SpriteRenderer:
   serializedVersion: 2
@@ -195,3 +195,16 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5800838257837154680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2359953720070236400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 502967fea489ffd45b7893524822c4e8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ScoreReward
+  scoreValue: 200

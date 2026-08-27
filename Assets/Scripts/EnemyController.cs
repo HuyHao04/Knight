@@ -156,6 +156,7 @@ public class EnemyController : MonoBehaviour
 
     public void Die()
     {
+        GetComponent<ScoreReward>()?.TryAwardDefeat();
         Destroy(gameObject);
     }
 }

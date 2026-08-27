@@ -6,19 +6,22 @@ public class BatController : MonoBehaviour
     [SerializeField] private float moveSpeed = 5f;
 
     [Header("Damage")]
-    [SerializeField] private int damage = 2;
+    [SerializeField, Min(0)] private int damage = 1;
 
     private Camera mainCamera;
     private SpriteRenderer spriteRenderer;
+    private Collider2D hitbox;
 
     // Đảm bảo mỗi BAT chỉ gây damage 1 lần cho Player
     private bool hasHitPlayer = false;
+    private bool isDead;
 
     void Start()
     {
         mainCamera = Camera.main;
 
         spriteRenderer = GetComponent<SpriteRenderer>();
+        hitbox = GetComponent<Collider2D>();
 
         // BAT mặc định nhìn sang phải
         // Flip lại để nhìn sang trái
@@ -55,29 +58,58 @@ public class BatController : MonoBehaviour
         if (!collision.CompareTag("Player"))
             return;
 
+        PlayerController player = collision.GetComponentInParent<PlayerController>();
+        if (player == null)
+            return;
+
+        // Bat dùng trigger để có thể bay xuyên qua Player, vì vậy cú đạp phải
+        // được nhận diện tại đây thay vì OnCollisionEnter2D như Slime.
+        if (CanBeStompedBy(collision))
+        {
+            player.BounceAfterEnemyStomp();
+            Die();
+            return;
+        }
+
         // Không gây damage nhiều lần
         if (hasHitPlayer)
             return;
 
-        PlayerController player =
-            collision.GetComponent<PlayerController>();
+        hasHitPlayer = true;
 
-        if (player != null)
-        {
-            hasHitPlayer = true;
-
-            // Trừ máu Player
-            player.TakeDamage(damage);
-        }
+        // Trừ máu Player khi va từ bên cạnh hoặc từ dưới lên.
+        player.TakeDamage(damage);
 
         // KHÔNG Destroy BAT
         // BAT tiếp tục bay xuyên qua Player
+    }
+
+    private bool CanBeStompedBy(Collider2D playerCollider)
+    {
+        Rigidbody2D playerBody = playerCollider.attachedRigidbody;
+        if (playerBody == null || playerBody.linearVelocity.y > 0.05f)
+        {
+            return false;
+        }
+
+        float batCenterY = hitbox != null
+            ? hitbox.bounds.center.y
+            : transform.position.y;
+
+        // Chân Player phải ở phía trên tâm Bat. Điều kiện này loại bỏ va chạm
+        // ngang ngay cả khi trigger tròn của Bat chạm Player từ khá xa.
+        return playerCollider.bounds.min.y >= batCenterY;
     }
 
     // ==================== DIE ====================
 
     public void Die()
     {
+        if (isDead)
+            return;
+
+        isDead = true;
+        GetComponent<ScoreReward>()?.TryAwardDefeat();
         Destroy(gameObject);
     }
 }

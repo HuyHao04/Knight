@@ -12,7 +12,7 @@ public class GroundSpell : MonoBehaviour
     [SerializeField] private float attackDuration = 0.5f;
 
     [Header("Damage")]
-    [SerializeField] private int damage = 3;
+    [SerializeField, Min(0)] private int damage = 2;
 
     private Collider2D damageCollider;
 

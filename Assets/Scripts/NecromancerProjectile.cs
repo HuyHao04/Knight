@@ -40,6 +40,13 @@ public class NecromancerProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        // Only the dedicated Obelisk platform Tilemap is transparent to Fireballs.
+        // It intentionally keeps the ground tag for player/platform ground checks.
+        if (collision.GetComponentInParent<ObeliskPlatformSurface>() != null)
+        {
+            return;
+        }
+
         // =========================
         // PLAYER
         // =========================
