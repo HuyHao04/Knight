@@ -144,6 +144,12 @@ public class ButtonManager : MonoBehaviour
 
     public void LoadLevel3()
     {
+        SceneManager.LoadScene("Level_3");
+    }
+
+
+    public void LoadBoss()
+    {
         SceneManager.LoadScene("Boss");
     }
 

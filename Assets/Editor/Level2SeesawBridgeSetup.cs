@@ -155,7 +155,7 @@ public static class Level2SeesawBridgeSetup
 
         ValidateLevel2();
         Debug.Log(
-            "LEVEL 2 SEESAW BRIDGE COMPLETE: 7 limited seesaws, 2 continuous rotators, "
+            "LEVEL 2 SEESAW BRIDGE COMPLETE: 7 free seesaws, 2 continuous rotators, "
             + "checkpoint, coins, enemy, death zone and Level 3 portal.");
     }
 
@@ -179,7 +179,7 @@ public static class Level2SeesawBridgeSetup
             "Level_2 must contain exactly 2 continuously rotating bridges.");
         Require(
             bridges.Count(bridge => !bridge.IsContinuousRotation) == 7,
-            "Level_2 must contain exactly 7 limited seesaw bridges.");
+            "Level_2 must contain exactly 7 free seesaw bridges.");
 
         Sprite pillarSprite = RequireSprite(PillarPath);
         foreach (SeesawBridgeController bridge in bridges)
@@ -189,6 +189,7 @@ public static class Level2SeesawBridgeSetup
             Require(bridge.GetComponent<BoxCollider2D>() != null, bridge.name + " is missing BoxCollider2D.");
             HingeJoint2D hinge = bridge.GetComponent<HingeJoint2D>();
             Require(hinge != null && hinge.connectedBody != null, bridge.name + " has no hinge anchor.");
+            Require(!hinge.useLimits, bridge.name + " must not have angle limits.");
             Require(
                 bridge.GetComponentsInChildren<SpriteRenderer>(true)
                     .Any(renderer => renderer.sprite == pillarSprite),

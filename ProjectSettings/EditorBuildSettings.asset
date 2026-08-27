@@ -11,18 +11,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level_1.unity
     guid: b6b8deb26473d2a4ca5702b84d5b01b7
-  - enabled: 0
-    path: Assets/Scenes/Boss_Necromancer.unity
-    guid: 837badac0f5d51842b476ccb52768dab
-  - enabled: 1
-    path: Assets/Scenes/Boss.unity
-    guid: 06045274f6beef244a53ff374304b1cf
   - enabled: 1
     path: Assets/Scenes/Level_2.unity
-    guid: fda94f3f2f6710142bfc1cf4350e23de
+    guid: 3a82e147e54c2ff45b5bf739c6672e4d
   - enabled: 1
     path: Assets/Scenes/Level_3.unity
     guid: 967be7ce11b9ebb42ba59b581fd4334d
+  - enabled: 1
+    path: Assets/Scenes/Boss.unity
+    guid: 06045274f6beef244a53ff374304b1cf
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 3590b91b4603b465dbb4216d601bff33, type: 3}

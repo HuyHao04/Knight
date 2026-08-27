@@ -71,11 +71,23 @@ public class PlayerController : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         cameraController = FindFirstObjectByType<CameraController>();
         currentHP = maxHP;
+        DamageFlashOverlay.EnsureExists();
 
         UpdateHealthUi();
         ScoreManager.Instance.BindScoreText(score);
         CheckpointManager checkpointManager = CheckpointManager.Instance;
         Vector3 registeredSpawn = checkpointManager.RegisterPlayerSpawn(transform.position);
+
+        if (VictoryPanel != null)
+        {
+            VictoryPanelLayout.Apply(
+                VictoryPanel,
+                victoryHP,
+                victoryScore,
+                victoryKill,
+                victoryTotalScore);
+            VictoryPanel.SetActive(false);
+        }
 
         if (checkpointManager.PlayerSpawnRestoredFromReload)
         {
@@ -675,17 +687,42 @@ public class PlayerController : MonoBehaviour
             legacyHPText.gameObject.SetActive(false);
         }
 
-        score.gameObject.SetActive(false);
+        if (score != null)
+        {
+            score.gameObject.SetActive(false);
+        }
 
         ScoreManager scores = ScoreManager.Instance;
-        victoryHP.text = "HP Remaining: " + currentHP + "/" + maxHP;
-        victoryScore.text = "Coins Collected: " + scores.CoinCount;
-        victoryKill.text = "Enemies Defeated: " + scores.EnemyKillCount;
+        if (victoryHP != null)
+        {
+            victoryHP.text = "HP Remaining: " + currentHP + "/" + maxHP;
+        }
+
+        if (victoryScore != null)
+        {
+            victoryScore.text = "Coins Collected: " + scores.CoinCount;
+        }
+
+        if (victoryKill != null)
+        {
+            victoryKill.text = "Enemies Defeated: " + scores.EnemyKillCount;
+        }
+
         if (victoryTotalScore != null)
         {
             victoryTotalScore.text = "Total Score: " + scores.TotalScore.ToString("D6");
         }
-        VictoryPanel.SetActive(true);
+
+        if (VictoryPanel != null)
+        {
+            VictoryPanelLayout.Apply(
+                VictoryPanel,
+                victoryHP,
+                victoryScore,
+                victoryKill,
+                victoryTotalScore);
+            VictoryPanel.SetActive(true);
+        }
     }
 
     public void TriggerGameOver()
@@ -753,6 +790,7 @@ public class PlayerController : MonoBehaviour
 
         currentHP = Mathf.Clamp(currentHP - damage, 0, maxHP);
         UpdateHealthUi();
+        DamageFlashOverlay.FlashDamage();
 
         if (AudioManager.instance != null)
         {

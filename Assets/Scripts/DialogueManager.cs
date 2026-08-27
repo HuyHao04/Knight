@@ -21,6 +21,8 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private Button nextButton;
+    [Tooltip("Optional. Leave empty when the next button uses an icon instead of text.")]
+    [SerializeField] private TextMeshProUGUI nextButtonLabel;
 
     [Header("Player")]
     [SerializeField] private PlayerController playerController;
@@ -33,15 +35,41 @@ public class DialogueManager : MonoBehaviour
     private DialogueLine[] activeDialogueLines;
     private Action dialogueCompleted;
     private bool releasePlayerOnEnd = true;
+    private bool isUiReady;
 
-    private void Start()
+    private void Awake()
     {
-        // Ẩn dialogue khi bắt đầu game
+        if (nextButtonLabel == null && nextButton != null)
+        {
+            nextButtonLabel = nextButton.GetComponentInChildren<TextMeshProUGUI>(true);
+        }
+
+        isUiReady = dialoguePanel != null
+            && nameText != null
+            && dialogueText != null
+            && nextButton != null;
+
+        if (!isUiReady)
+        {
+            Debug.LogError(
+                "DialogueManager is missing one or more required UI references.",
+                this);
+            return;
+        }
+
         dialoguePanel.SetActive(false);
 
-        // Đảm bảo Button không bị đăng ký nhiều lần
-        nextButton.onClick.RemoveAllListeners();
+        // Only manage this component's listener. Inspector or other runtime listeners remain intact.
+        nextButton.onClick.RemoveListener(NextDialogue);
         nextButton.onClick.AddListener(NextDialogue);
+    }
+
+    private void OnDestroy()
+    {
+        if (nextButton != null)
+        {
+            nextButton.onClick.RemoveListener(NextDialogue);
+        }
     }
 
     // =========================================================
@@ -58,6 +86,12 @@ public class DialogueManager : MonoBehaviour
         Action onCompleted,
         bool releaseControlWhenFinished = true)
     {
+        if (!isUiReady)
+        {
+            Debug.LogError("DialogueManager cannot start because its UI is not ready.", this);
+            return false;
+        }
+
         if (isDialogueActive)
             return false;
 
@@ -101,14 +135,12 @@ public class DialogueManager : MonoBehaviour
         nameText.text = activeDialogueLines[currentLine].speaker;
         dialogueText.text = activeDialogueLines[currentLine].text;
 
-        // Nếu là câu cuối thì có thể đổi chữ Button
-        if (currentLine == activeDialogueLines.Length - 1)
+        // Icon-only buttons intentionally have no label. Text buttons can still show NEXT / END.
+        if (nextButtonLabel != null)
         {
-            nextButton.GetComponentInChildren<TextMeshProUGUI>().text = "END";
-        }
-        else
-        {
-            nextButton.GetComponentInChildren<TextMeshProUGUI>().text = "NEXT";
+            nextButtonLabel.text = currentLine == activeDialogueLines.Length - 1
+                ? "END"
+                : "NEXT";
         }
     }
 
