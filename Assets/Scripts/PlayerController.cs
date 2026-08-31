@@ -132,13 +132,13 @@ public class PlayerController : MonoBehaviour
 
     void Move()
     {
-        if (Input.GetKey(KeyCode.RightArrow))
+        if (Input.GetKey(KeyCode.D))
         {
             animator.SetBool("ItsRun", true);
             transform.Translate(Vector2.right * speed * Time.deltaTime);
             transform.localScale = new Vector3(1, 1, 1);
         }
-        else if (Input.GetKey(KeyCode.LeftArrow))
+        else if (Input.GetKey(KeyCode.A))
         {
             animator.SetBool("ItsRun", true);
             transform.Translate(Vector2.left * speed * Time.deltaTime);
@@ -700,17 +700,17 @@ public class PlayerController : MonoBehaviour
 
         if (victoryScore != null)
         {
-            victoryScore.text = "Coins Collected: " + scores.CoinCount;
+            victoryScore.text = "Coins Collected: " + scores.RunCoinCount;
         }
 
         if (victoryKill != null)
         {
-            victoryKill.text = "Enemies Defeated: " + scores.EnemyKillCount;
+            victoryKill.text = "Enemies Defeated: " + scores.RunEnemyKillCount;
         }
 
         if (victoryTotalScore != null)
         {
-            victoryTotalScore.text = "Total Score: " + scores.TotalScore.ToString("D6");
+            victoryTotalScore.text = "Total Score: " + scores.RunTotalScore.ToString("D6");
         }
 
         if (VictoryPanel != null)

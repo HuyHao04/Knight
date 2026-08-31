@@ -18,6 +18,7 @@ public sealed class LevelCountdownTimer : MonoBehaviour
     private float remainingSeconds;
     private int displayedSecond = -1;
     private bool expired;
+    private LevelOneTutorial levelOneTutorial;
 
     public float RemainingSeconds => remainingSeconds;
 
@@ -36,6 +37,9 @@ public sealed class LevelCountdownTimer : MonoBehaviour
         }
 
         remainingSeconds = Mathf.Max(1f, durationSeconds);
+        levelOneTutorial = FindAnyObjectByType<LevelOneTutorial>(
+            FindObjectsInactive.Include
+        );
         RefreshDisplay(true);
     }
 
@@ -59,6 +63,11 @@ public sealed class LevelCountdownTimer : MonoBehaviour
         }
 
         if (player.IsLevelCompleted || player.IsGameOver)
+        {
+            return;
+        }
+
+        if (levelOneTutorial != null && !levelOneTutorial.CountdownStarted)
         {
             return;
         }

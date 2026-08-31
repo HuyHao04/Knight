@@ -8,7 +8,7 @@ public class SkeletonArcher : MonoBehaviour
     [SerializeField] private float attackCooldown = 2f;
 
     [Header("Detect Player")]
-    [SerializeField] private float detectRange = 8f;
+    [SerializeField] private float detectRange = 13f;
 
     private Transform player;
     private Animator animator;

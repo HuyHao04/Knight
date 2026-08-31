@@ -112,7 +112,7 @@ MonoBehaviour:
   arrowPrefab: {fileID: 7218611679880806560, guid: a94a0506d5a46ae4a83f4305d53aafad, type: 3}
   shootPoint: {fileID: 7028261474377885608}
   attackCooldown: 2
-  detectRange: 15
+  detectRange: 13
 --- !u!95 &6964906156178813110
 Animator:
   serializedVersion: 7

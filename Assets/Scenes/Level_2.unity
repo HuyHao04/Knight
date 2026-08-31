@@ -6116,7 +6116,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown
@@ -13154,7 +13154,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown
@@ -13778,7 +13778,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown
@@ -21233,7 +21233,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown
@@ -21330,7 +21330,7 @@ PrefabInstance:
       objectReference: {fileID: 1174766119}
     - target: {fileID: 777981282211136753, guid: 51f82abe67be9e645864a6357b180b29, type: 3}
       propertyPath: destinationScene
-      value: Boss
+      value: Level_3
       objectReference: {fileID: 0}
     - target: {fileID: 1861953698887984440, guid: 51f82abe67be9e645864a6357b180b29, type: 3}
       propertyPath: m_Name

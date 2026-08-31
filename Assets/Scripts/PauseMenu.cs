@@ -98,6 +98,13 @@ public class PauseMenu : MonoBehaviour
         );
     }
 
+    public void PlayAgainFromBeginning()
+    {
+        Time.timeScale = 1f;
+        ScoreManager.StartNewRun();
+        SceneManager.LoadScene("Level_1");
+    }
+
     // =========================
     // MAIN MENU
     // =========================

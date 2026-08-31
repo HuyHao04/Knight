@@ -125,7 +125,12 @@ public class Portal : MonoBehaviour
             Debug.LogError("Portal could not start transition to '" + destinationScene + "'.", this);
             isTransitioning = false;
             playerInRange.SetControlEnabled(true);
+            yield break;
         }
+
+        // Only completed levels enter the campaign total. A death/restart reloads
+        // the scene without committing, preventing recollected items from counting twice.
+        ScoreManager.Instance.CommitCurrentLevelToRun();
     }
 
     private bool CanLoadDestination()

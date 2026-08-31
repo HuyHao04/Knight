@@ -92,6 +92,7 @@ public class ButtonManager : MonoBehaviour
 
     public void play()
     {
+        ScoreManager.StartNewRun();
         SceneManager.LoadScene("Level_1");
     }
 
@@ -132,24 +133,28 @@ public class ButtonManager : MonoBehaviour
 
     public void LoadLevel1()
     {
+        ScoreManager.StartNewRun();
         SceneManager.LoadScene("Level_1");
     }
 
 
     public void LoadLevel2()
     {
+        ScoreManager.StartNewRun();
         SceneManager.LoadScene("Level_2");
     }
 
 
     public void LoadLevel3()
     {
+        ScoreManager.StartNewRun();
         SceneManager.LoadScene("Level_3");
     }
 
 
     public void LoadBoss()
     {
+        ScoreManager.StartNewRun();
         SceneManager.LoadScene("Boss");
     }
 
@@ -352,9 +357,9 @@ public class ButtonManager : MonoBehaviour
 
     public void PlayAgain()
     {
-        SceneManager.LoadScene(
-            SceneManager.GetActiveScene().name
-        );
+        Time.timeScale = 1f;
+        ScoreManager.StartNewRun();
+        SceneManager.LoadScene("Level_1");
     }
 
 
@@ -369,6 +374,7 @@ public class ButtonManager : MonoBehaviour
 
     public void NextLevel()
     {
+        ScoreManager.Instance.CommitCurrentLevelToRun();
         SceneManager.LoadScene(nextLevelScene);
     }
 }

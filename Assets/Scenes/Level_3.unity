@@ -7271,7 +7271,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown
@@ -14095,7 +14095,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown
@@ -15818,7 +15818,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown
@@ -17127,7 +17127,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: detectRange
-      value: 7
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8029720098133409512, guid: 47f92bac90388b146889ad1c4f4e1430, type: 3}
       propertyPath: attackCooldown

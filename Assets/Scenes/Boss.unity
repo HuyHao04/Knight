@@ -5732,6 +5732,7 @@ MonoBehaviour:
   nameText: {fileID: 1157510290}
   dialogueText: {fileID: 904743457}
   nextButton: {fileID: 2103057782}
+  nextButtonLabel: {fileID: 0}
   playerController: {fileID: 8883790674275804887}
   dialogueLines:
   - speaker: Elder
@@ -6579,6 +6580,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialogue
   dialogueManager: {fileID: 889003250}
+  requireInteractKey: 0
 --- !u!1 &1057224789
 GameObject:
   m_ObjectHideFlags: 0
@@ -9172,7 +9174,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1799392127}
         m_TargetAssemblyTypeName: PauseMenu, Assembly-CSharp
-        m_MethodName: RestartLevel
+        m_MethodName: PlayAgainFromBeginning
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -9357,7 +9359,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1272737000
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10879,7 +10881,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -60.6, y: -252}
+  m_AnchoredPosition: {x: -1.2000122, y: -252}
   m_SizeDelta: {x: 60, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1610332313

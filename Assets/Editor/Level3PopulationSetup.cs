@@ -386,7 +386,7 @@ public static class Level3PopulationSetup
         if (archer != null)
         {
             SerializedObject serialized = new SerializedObject(archer);
-            serialized.FindProperty("detectRange").floatValue = 7.0f;
+            serialized.FindProperty("detectRange").floatValue = 13.0f;
             serialized.FindProperty("attackCooldown").floatValue = 2.2f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
